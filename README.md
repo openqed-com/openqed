@@ -1,159 +1,133 @@
 # openqed
 
-AI session provenance for commits, PRs, and reviews.
+Track why your code was written — not just what changed.
 
-openqed tracks which parts of your code were written by AI coding agents (Claude Code, etc.) and automatically generates attributed commit messages with provenance metadata.
+openqed extracts provenance from AI coding sessions (Claude Code, Cursor, etc.) and makes it queryable via CLI and MCP server. When an AI agent or teammate asks "why is this code like this?", openqed has the answer.
+
+## What It Looks Like
+
+```
+$ openqed context src/auth.ts
+
+Context for src/auth.ts (3 nuggets, 312 tokens)
+
+  [decision] chose JWT over session cookies for stateless auth
+    JWT provides stateless authentication which is better for horizontal scaling
+    src/auth.ts | claude-code | 2025-01-15
+
+  [constraint] must support Node 18 and above
+    workspace | claude-code | 2025-01-15
+
+  [tuning] human-edited AI output in src/auth.ts
+    src/auth.ts | claude-code | 2025-01-15
+```
+
+Every piece of context — a **nugget** — is one reason why code is the way it is: a decision made, a constraint imposed, an alternative rejected, a workaround applied.
 
 ## Features
 
-- **Automatic attribution** — detects which staged files were AI-generated vs human-written
-- **Smart commit messages** — generates conventional commit messages using LLM or offline heuristics
-- **Session inspection** — browse and inspect AI coding sessions in your project
-- **Git trailers** — adds `openqed-Session`, `openqed-Attribution`, and `Co-authored-by` metadata
-- **Git hook integration** — optional `prepare-commit-msg` hook for seamless workflow
+**Context & Provenance**
+- Extract context nuggets from AI sessions — decisions, constraints, rejections, workarounds, and more
+- Query by file path, symbol name, or natural language
+- 8 nugget types with weighted relevance scoring and staleness detection
+- Token-budget-aware responses with summary, standard, and deep depth levels
+
+**AI Agent Integration**
+- MCP server with 3 tools: query context, file history, and architectural decisions
+- Works with Claude Code, Cursor, Kiro, and any MCP-compatible editor
+- Agents automatically get provenance when reading or modifying code
+
+**Commit Attribution**
+- Smart commit messages generated from diffs and session context
+- Git trailers linking commits to AI sessions (`openqed-Session`, `openqed-Attribution`)
+- Optional `prepare-commit-msg` hook for seamless workflow
+
+**Team Sharing**
+- Export/import provenance as JSONL files committed to git
+- Teammates clone the repo and import — no central server needed
+- See [Team Sharing Guide](docs/team-sharing.md) for the full workflow
 
 ## Requirements
 
 - Node.js >= 20
 - Git repository
-- [Claude Code](https://claude.ai/claude-code) (for session detection and LLM-powered commit messages)
+- [Claude Code](https://claude.ai/claude-code) (for session detection and LLM-powered features)
 
-## Install
+## Quick Start
 
 ```bash
+# 1. Install
 npm install -g openqed-cli
+
+# 2. Initialize in your repo
+cd your-project
+openqed init
+
+# 3. Extract nuggets from existing AI sessions
+openqed extract
+
+# 4. Query context for any file
+openqed context src/auth.ts
+openqed context --query "why did we choose this approach"
+
+# 5. (Optional) Set up MCP server for AI agent integration
+# See docs/mcp-setup.md for full instructions
 ```
 
-Or install locally in your project:
+## How It Works
+
+openqed reads AI coding session logs (e.g. from `~/.claude/projects/`) to find sessions relevant to your workspace. It extracts structured **context nuggets** from those sessions — either via fast heuristic pattern-matching or higher-quality LLM extraction. When you or an AI agent queries a file, openqed finds relevant nuggets, checks for staleness, scores them by relevance, and returns a token-budget-aware response. See [How Context Works](docs/how-context-works.md) for the full pipeline.
+
+## CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `openqed init` | Initialize openqed in the current git repository |
+| `openqed commit` | Generate an AI-attributed commit message for staged changes |
+| `openqed sessions` | List AI coding sessions detected in the workspace |
+| `openqed sessions inspect <id>` | Show detailed session information |
+| `openqed extract` | Extract context nuggets from AI sessions |
+| `openqed context <path>` | Query context for a file or topic |
+| `openqed nuggets` | Browse and inspect extracted nuggets |
+| `openqed coverage` | Show nugget coverage across files |
+| `openqed export` | Export provenance data as JSONL |
+| `openqed import` | Import provenance data from JSONL |
+| `openqed mcp-server` | Start the MCP server |
+
+See [API Reference](docs/api.md) for all flags and options.
+
+## MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `openqed_context` | Query context/provenance for a file or topic — returns ranked nuggets |
+| `openqed_file_history` | Get AI session history for a specific file |
+| `openqed_decisions` | Get architectural decisions, rejections, and constraints |
+
+See [MCP Setup Guide](docs/mcp-setup.md) for configuration and [API Reference](docs/api.md#mcp-tools) for schemas.
+
+## Export & Import
+
+Share provenance across your team by exporting to JSONL and committing to git:
 
 ```bash
-npm install --save-dev openqed-cli
+openqed export          # writes to .openqed/data/*.jsonl
+git add .openqed/data/
+git commit -m "chore: export openqed provenance"
+
+# Teammates after pulling:
+openqed init
+openqed import          # reads from .openqed/data/*.jsonl
 ```
 
-### Development (from source)
+Import is idempotent — duplicates are skipped. See [Team Sharing Guide](docs/team-sharing.md) for the recommended workflow.
+
+## Development
 
 ```bash
 git clone https://github.com/your-org/openqed.git
 cd openqed
 npm install
-npm run build
-```
-
-## Quick Start
-
-### 1. Initialize in your repo
-
-```bash
-cd your-project
-openqed init
-```
-
-This creates a `.openqed/` directory (gitignored), and optionally installs a `prepare-commit-msg` git hook.
-
-### 2. Generate a commit message
-
-Stage some files, then:
-
-```bash
-# Preview the generated message (no commit)
-openqed commit --dry-run
-
-# Auto-commit with the generated message
-openqed commit --auto
-
-# Open in $EDITOR for review before committing
-openqed commit
-
-# Use offline heuristics (no LLM call)
-openqed commit --offline
-```
-
-### 3. Browse AI sessions
-
-```bash
-# List all detected sessions
-openqed sessions
-
-# List sessions from the last 3 days
-openqed sessions --since 3d
-
-# Inspect a specific session
-openqed sessions inspect <session-id>
-```
-
-## Testing It Out
-
-The quickest way to test openqed end-to-end:
-
-```bash
-# 1. Build
-npm run build
-
-# 2. In any git repo with staged changes:
-git add <some-files>
-
-# 3. Preview what openqed would generate
-node /path/to/openqed/dist/index.js commit --dry-run --offline
-
-# 4. Or link it globally for convenience
-npm link
-openqed commit --dry-run --offline
-```
-
-If you have Claude Code installed and have used it in the repo, openqed will automatically find the relevant session and include attribution data in the commit message.
-
-## Commands
-
-### `openqed init [--force]`
-
-Initialize openqed in the current git repository.
-
-| Flag | Description |
-|------|-------------|
-| `--force` | Overwrite an existing `prepare-commit-msg` hook |
-
-### `openqed commit [options]`
-
-Generate an AI-attributed commit message for staged changes.
-
-| Flag | Description |
-|------|-------------|
-| `--auto` | Commit automatically without opening an editor |
-| `--dry-run` | Print the message to stdout without committing |
-| `--hook <file>` | Write message to a file (used by the git hook) |
-| `--model <model>` | Specify which LLM model to use |
-| `--offline` | Use offline heuristic generation (no LLM) |
-
-### `openqed sessions [options]`
-
-List AI coding sessions detected in the current workspace.
-
-| Flag | Description |
-|------|-------------|
-| `--since <duration>` | Filter sessions (e.g. `3d`, `1w`, `24h`, `2m`) |
-
-### `openqed sessions inspect <id>`
-
-Show detailed information about a session: user prompts, artifacts created/modified, and event summary.
-
-## How It Works
-
-1. **Session detection** — openqed reads Claude Code session logs from `~/.claude/projects/` to find sessions relevant to your workspace
-2. **File attribution** — staged files are cross-referenced with session artifacts to determine which were AI-generated
-3. **Message generation** — a commit message is generated via LLM (using Claude Code) or offline heuristics based on the diff, file names, and session context
-4. **Trailers** — provenance metadata is appended as git trailers:
-
-```
-feat(auth): add JWT token validation
-
-openqed-Session: session-abc123
-openqed-Attribution: 75% agent (src/auth.ts, src/middleware.ts, src/types.ts), 25% human (config.json)
-Co-authored-by: Claude Code <noreply@anthropic.com>
-```
-
-## Development
-
-```bash
 npm run build        # Build with tsup
 npm run dev          # Watch mode
 npm run typecheck    # Type checking
