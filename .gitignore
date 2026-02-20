@@ -1,0 +1,8 @@
+.claude/**
+dist/**
+node_modules
+.design/**
+.openqed/
+*.db
+*.db-wal
+*.db-shm
