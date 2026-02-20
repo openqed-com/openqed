@@ -1,0 +1,7 @@
+version: 1
+export:
+  nuggets: true
+  sessions: true
+  decisions: true
+  artifacts: true
+  events: false

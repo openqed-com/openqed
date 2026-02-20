@@ -23,6 +23,18 @@ describe('schema migrations', () => {
     expect(tableNames).toContain('artifacts');
     expect(tableNames).toContain('decisions');
     expect(tableNames).toContain('output_links');
+    expect(tableNames).toContain('context_nuggets');
+    expect(tableNames).toContain('context_queries');
+
+    // FTS5 virtual tables
+    const ftsCheck = db
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('session_fts', 'nuggets_fts')",
+      )
+      .all() as { name: string }[];
+    const ftsNames = ftsCheck.map((t) => t.name);
+    expect(ftsNames).toContain('session_fts');
+    expect(ftsNames).toContain('nuggets_fts');
 
     db.close();
   });

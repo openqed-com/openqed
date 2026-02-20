@@ -2,6 +2,13 @@ import { Command } from 'commander';
 import { createInitCommand } from './commands/init.js';
 import { createCommitCommand } from './commands/commit.js';
 import { createSessionsCommand } from './commands/sessions.js';
+import { createContextCommand } from './commands/context.js';
+import { createExtractCommand } from './commands/extract.js';
+import { createNuggetsCommand } from './commands/nuggets.js';
+import { createCoverageCommand } from './commands/coverage.js';
+import { createMcpServerCommand } from './commands/mcp-server-cmd.js';
+import { createExportCommand } from './commands/export.js';
+import { createImportCommand } from './commands/import.js';
 import { initStore, closeStore } from './store/index.js';
 import { debug } from './utils/logger.js';
 
@@ -15,6 +22,13 @@ program
 program.addCommand(createInitCommand());
 program.addCommand(createCommitCommand());
 program.addCommand(createSessionsCommand());
+program.addCommand(createContextCommand());
+program.addCommand(createExtractCommand());
+program.addCommand(createNuggetsCommand());
+program.addCommand(createCoverageCommand());
+program.addCommand(createExportCommand());
+program.addCommand(createImportCommand());
+program.addCommand(createMcpServerCommand());
 
 program.exitOverride();
 

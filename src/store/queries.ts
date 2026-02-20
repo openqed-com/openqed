@@ -104,3 +104,56 @@ export function getRecentSessions(
 ): AgentSession[] {
   return findSessionsByWorkspace(db, workspaceId, { limit });
 }
+
+// --------------- Export-oriented queries (no LIMIT, deterministic order) ---------------
+
+export function getAllSessionsForExport(
+  db: BetterSqlite3.Database,
+  workspaceId: string,
+): Record<string, unknown>[] {
+  const sql = `
+    SELECT * FROM sessions
+    WHERE workspace_id = ?
+    ORDER BY started_at ASC, id ASC
+  `;
+  return db.prepare(sql).all(workspaceId) as Record<string, unknown>[];
+}
+
+export function getAllArtifactsForExport(
+  db: BetterSqlite3.Database,
+  workspaceId: string,
+): Record<string, unknown>[] {
+  const sql = `
+    SELECT a.* FROM artifacts a
+    JOIN sessions s ON a.session_id = s.id
+    WHERE s.workspace_id = ?
+    ORDER BY a.session_id ASC, a.id ASC
+  `;
+  return db.prepare(sql).all(workspaceId) as Record<string, unknown>[];
+}
+
+export function getAllDecisionsForExport(
+  db: BetterSqlite3.Database,
+  workspaceId: string,
+): Record<string, unknown>[] {
+  const sql = `
+    SELECT d.* FROM decisions d
+    JOIN sessions s ON d.session_id = s.id
+    WHERE s.workspace_id = ?
+    ORDER BY d.id ASC
+  `;
+  return db.prepare(sql).all(workspaceId) as Record<string, unknown>[];
+}
+
+export function getAllEventsForExport(
+  db: BetterSqlite3.Database,
+  workspaceId: string,
+): Record<string, unknown>[] {
+  const sql = `
+    SELECT e.* FROM events e
+    JOIN sessions s ON e.session_id = s.id
+    WHERE s.workspace_id = ?
+    ORDER BY e.session_id ASC, e.id ASC
+  `;
+  return db.prepare(sql).all(workspaceId) as Record<string, unknown>[];
+}

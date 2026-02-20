@@ -2,7 +2,8 @@
 dist/**
 node_modules
 .design/**
-.openqed/
+.openqed/local/
+.openqed/data/
 *.db
 *.db-wal
 *.db-shm

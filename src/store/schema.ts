@@ -96,4 +96,59 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_output_links_ref ON output_links(output_ref);
     `,
   },
+  {
+    version: 2,
+    description: 'Context layer: nuggets, queries, FTS5',
+    up: `
+      CREATE TABLE IF NOT EXISTS context_nuggets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT NOT NULL REFERENCES sessions(id),
+        event_id INTEGER REFERENCES events(id),
+        type TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        detail TEXT,
+        scope_path TEXT,
+        scope_symbol TEXT,
+        confidence REAL DEFAULT 1.0,
+        token_cost INTEGER,
+        extracted_at TEXT NOT NULL,
+        stale_after TEXT,
+        metadata TEXT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_nuggets_session ON context_nuggets(session_id);
+      CREATE INDEX IF NOT EXISTS idx_nuggets_scope_path ON context_nuggets(scope_path);
+      CREATE INDEX IF NOT EXISTS idx_nuggets_scope_symbol ON context_nuggets(scope_symbol);
+      CREATE INDEX IF NOT EXISTS idx_nuggets_type ON context_nuggets(type);
+
+      CREATE TABLE IF NOT EXISTS context_queries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        queried_at TEXT NOT NULL,
+        query_type TEXT NOT NULL,
+        query_value TEXT NOT NULL,
+        workspace_id TEXT REFERENCES workspaces(id),
+        nuggets_returned INTEGER DEFAULT 0,
+        token_budget INTEGER,
+        agent TEXT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_queries_value ON context_queries(query_value);
+      CREATE INDEX IF NOT EXISTS idx_queries_workspace ON context_queries(workspace_id);
+
+      CREATE VIRTUAL TABLE IF NOT EXISTS session_fts USING fts5(
+        session_id UNINDEXED,
+        workspace_id UNINDEXED,
+        content,
+        tokenize='porter unicode61'
+      );
+
+      CREATE VIRTUAL TABLE IF NOT EXISTS nuggets_fts USING fts5(
+        nugget_id UNINDEXED,
+        session_id UNINDEXED,
+        summary,
+        detail,
+        tokenize='porter unicode61'
+      );
+    `,
+  },
 ];

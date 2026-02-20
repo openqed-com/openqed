@@ -3,11 +3,18 @@
   "version": "0.1.0",
   "description": "AI session provenance for commits, PRs, and reviews",
   "type": "module",
-  "bin": { "openqed": "./dist/index.js" },
+  "bin": {
+    "openqed": "./dist/index.js",
+    "openqed-mcp-server": "./dist/mcp-server.js"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "engines": { "node": ">=20.0.0" },
-  "files": ["dist"],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -17,20 +24,22 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "commander": "^13.0.0",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "better-sqlite3": "^11.0.0",
-    "simple-git": "^3.27.0",
-    "yaml": "^2.7.0",
     "chalk": "^5.4.0",
+    "commander": "^13.0.0",
     "ora": "^8.0.0",
-    "strip-ansi": "^7.0.0"
+    "simple-git": "^3.27.0",
+    "strip-ansi": "^7.0.0",
+    "yaml": "^2.7.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "tsup": "^8.0.0",
-    "vitest": "^3.0.0",
-    "typescript": "^5.7.0",
     "@types/better-sqlite3": "^7.0.0",
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
   },
   "license": "MIT"
 }

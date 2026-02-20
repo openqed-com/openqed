@@ -11,6 +11,12 @@ export const OPENQED_DIR = path.join(os.homedir(), '.openqed');
 
 export const OPENQED_DB_PATH = path.join(OPENQED_DIR, 'store.db');
 
+// Workspace-relative paths (inside the repo)
+export const OPENQED_LOCAL_DIR = '.openqed';
+export const OPENQED_DATA_SUBDIR = '.openqed/data';
+export const OPENQED_LOCAL_SUBDIR = '.openqed/local';
+export const OPENQED_CONFIG_FILE = '.openqed/config.yml';
+
 /**
  * Convert an absolute path to a Claude-style project hash.
  * Replaces all `/` with `-`.
